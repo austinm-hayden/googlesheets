@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font: 14px/1.4 system-ui, Segoe UI, Roboto, Arial; padding: 16px; }
+    .row { margin: 10px 0; }
+    select, button { padding: 8px; font: inherit; }
+    .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #999; background: #fafafa; cursor: pointer; }
+    .btn.primary { background: #4285F4; color: #fff; border-color: #4285F4; }
+    .muted { color: #666; }
+    .success { color: #0a7f28; font-weight: 600; }
+    .error { color: #b00020; font-weight: 600; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>Restore Archived Branch Sheet</h2>
+
+  <div class="row">
+    <label for="archiveSel">Select an archived sheet:</label><br>
+    <select id="archiveSel" style="width:100%"></select>
+  </div>
+
+  <div class="row">
+    <button class="btn primary" onclick="restore()">Restore</button>
+    <button class="btn" onclick="google.script.host.close()">Close</button>
+  </div>
+
+  <div id="msg" class="row muted">Archives starting with <code>_Archive_</code> are hidden but selectable below.</div>
+
+  <script>
+    function loadArchives() {
+      google.script.run.withSuccessHandler(function(list) {
+        const sel = document.getElementById('archiveSel');
+        sel.innerHTML = '';
+        if (!list || !list.length) {
+          document.getElementById('msg').innerHTML = '<span class="error">No archives found.</span>';
+          return;
+        }
+        // Sort newest first (by name suffix timestamp)
+        list.sort((a, b) => a.name < b.name ? 1 : -1);
+        list.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.name;
+          opt.textContent = item.name + (item.hidden ? ' (hidden)' : '');
+          sel.appendChild(opt);
+        });
+      }).listArchives();
+    }
+
+    function restore() {
+      const name = document.getElementById('archiveSel').value;
+      if (!name) return;
+      document.getElementById('msg').textContent = 'Restoring ' + name + '…';
+      google.script.run
+        .withSuccessHandler(function() {
+          document.getElementById('msg').innerHTML = '<span class="success">Restored successfully.</span>';
+        })
+        .withFailureHandler(function(err) {
+          document.getElementById('msg').innerHTML = '<span class="error">' + (err && err.message ? err.message : err) + '</span>';
+        })
+        .restoreArchive(name);
+    }
+
+    loadArchives();
+  </script>
+</body>
+</html>
