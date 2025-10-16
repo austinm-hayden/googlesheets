@@ -148,6 +148,6 @@
     "lastBuild": "2025-10-16T14:25:00-05:00",
     "sourceCommit": "auto-filled by buildInformationTab() via GitHub API",
     "buildEnvironment": "Google Apps Script (Bound Spreadsheet Project)",
-    "maintainer": "Austin Monson <austinm@haydenmachinery.com>"
+    "maintainer": "Austin Monson <austinm@myhayden.com>"
   }
 }
