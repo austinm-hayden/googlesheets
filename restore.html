@@ -5,48 +5,83 @@
   <meta charset="utf-8">
   <title>Restore Archive</title>
   <style>
-    body{font:14px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:16px;}
-    select,button{padding:8px;font:inherit;}
-    .btn{padding:8px 14px;border-radius:8px;border:1px solid #999;background:#fff;cursor:pointer;}
-    .btn.primary{background:#4285F4;color:#fff;border-color:#4285F4;}
-    .success{color:#0a7f28;font-weight:600;}
-    .error{color:#b00020;font-weight:600;white-space:pre-wrap;}
+    /* =============================================================================
+       STYLE BLOCK – RESTORE MENU DIALOG
+       -----------------------------------------------------------------------------
+       Simple and consistent with upload dialog theme.
+       ============================================================================= */
+    body { font: 14px/1.5 "Segoe UI", Roboto, Arial, sans-serif; padding: 18px; }
+    h2 { margin-top: 0; color: #1a73e8; }
+    select, button { padding: 8px; font: inherit; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #999; background: #fff; cursor: pointer; }
+    .btn.primary { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .success { color: #0a7f28; font-weight: 600; margin-top: 10px; }
+    .error { color: #b00020; font-weight: 600; white-space: pre-wrap; margin-top: 10px; }
+    .row { margin: 12px 0; }
   </style>
 </head>
-<body>
-<h2>Restore Archived Branch Sheet</h2>
-<div class="row">
-  <label>Select archived sheet:</label><br>
-  <select id="sel" style="width:100%"></select>
-</div>
-<div class="row">
-  <button class="btn primary" onclick="restore()">Restore</button>
-  <button class="btn" onclick="google.script.host.close()">Close</button>
-</div>
-<div id="msg"></div>
 
-<script>
-function load(){
-  google.script.run.withSuccessHandler(list=>{
-    const s=document.getElementById('sel');
-    if(!list||!list.length){document.getElementById('msg').innerHTML='<span class="error">No archives found.</span>';return;}
-    list.sort((a,b)=>a.name<b.name?1:-1);
-    list.forEach(i=>{
-      const o=document.createElement('option');
-      o.value=i.name;o.textContent=i.name+(i.hidden?' (hidden)':'');s.appendChild(o);
-    });
-  }).listArchives();
-}
-function restore(){
-  const n=document.getElementById('sel').value;if(!n)return;
-  document.getElementById('msg').textContent='Restoring '+n+'…';
-  google.script.run.withSuccessHandler(()=>{
-    document.getElementById('msg').innerHTML='<span class="success">Restored successfully.</span>';
-  }).withFailureHandler(e=>{
-    document.getElementById('msg').innerHTML='<span class="error">'+(e.message||e)+'</span>';
-  }).restoreArchive(n);
-}
-load();
-</script>
+<body>
+  <h2>Restore Archived Branch Sheet</h2>
+
+  <!-- SELECT ARCHIVE -->
+  <div class="row">
+    <label><b>Select archived sheet:</b></label><br>
+    <select id="sel" style="width:100%"></select>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="row">
+    <button class="btn primary" onclick="restore()">Restore</button>
+    <button class="btn" onclick="google.script.host.close()">Close</button>
+  </div>
+
+  <!-- STATUS OUTPUT -->
+  <div id="msg"></div>
+
+  <script>
+  /**
+   * =============================================================================
+   * CLIENT SCRIPT – RESTORE ARCHIVE MENU
+   * -----------------------------------------------------------------------------
+   * 1. load(): populate dropdown from listArchives() Apps Script function.
+   * 2. restore(): call restoreArchive(name) with error/success feedback.
+   * =============================================================================
+   */
+
+  function load() {
+    google.script.run.withSuccessHandler(list => {
+      const s = document.getElementById('sel');
+      if (!list || !list.length) {
+        document.getElementById('msg').innerHTML = '<span class="error">No archives found.</span>';
+        return;
+      }
+      list.sort((a, b) => a.name < b.name ? 1 : -1);
+      list.forEach(i => {
+        const o = document.createElement('option');
+        o.value = i.name;
+        o.textContent = i.name + (i.hidden ? ' (hidden)' : '');
+        s.appendChild(o);
+      });
+    }).listArchives();
+  }
+
+  function restore() {
+    const n = document.getElementById('sel').value;
+    if (!n) return;
+    document.getElementById('msg').textContent = 'Restoring ' + n + '…';
+    google.script.run
+      .withSuccessHandler(() => {
+        document.getElementById('msg').innerHTML = '<span class="success">Restored successfully.</span>';
+      })
+      .withFailureHandler(e => {
+        document.getElementById('msg').innerHTML = '<span class="error">' + (e.message || e) + '</span>';
+      })
+      .restoreArchive(n);
+  }
+
+  // Initialize on load
+  load();
+  </script>
 </body>
 </html>
