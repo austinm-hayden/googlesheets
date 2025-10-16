@@ -5,70 +5,130 @@
   <meta charset="utf-8">
   <title>Upload Raw PM Data</title>
   <style>
-    body{font:14px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:16px;}
-    .card{border:1px solid #ddd;border-radius:10px;padding:16px;background:#fafafa;}
-    .row{margin:10px 0;}
-    .progress{height:10px;background:#eee;border-radius:6px;overflow:hidden;}
-    .bar{width:5%;height:100%;background:#4285F4;transition:width .3s;}
-    .btn{padding:8px 14px;border-radius:8px;border:1px solid #999;background:#fff;cursor:pointer;}
-    .btn.primary{background:#4285F4;color:#fff;border-color:#4285F4;}
-    .muted{color:#666;} .flex{display:flex;gap:8px;align-items:center;}
-    .success{color:#0a7f28;font-weight:600;}
-    .error{color:#b00020;font-weight:600;white-space:pre-wrap;}
-    .countdown{font-variant-numeric:tabular-nums;}
+    /* =============================================================================
+       STYLE BLOCK – FORM LAYOUT & VISUAL CONSISTENCY
+       -----------------------------------------------------------------------------
+       Mirrors Google's neutral UI design using subtle blues and greys.
+       ============================================================================= */
+    body { font: 14px/1.5 "Segoe UI", Roboto, Arial, sans-serif; padding: 18px; }
+    h2 { margin-top: 0; color: #1a73e8; }
+    .card { border: 1px solid #ccc; border-radius: 10px; padding: 16px; background: #fafafa; }
+    .row { margin: 12px 0; }
+    .progress { height: 10px; background: #eee; border-radius: 6px; overflow: hidden; }
+    .bar { width: 5%; height: 100%; background: #1a73e8; transition: width .3s; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #999; background: #fff; cursor: pointer; }
+    .btn.primary { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .muted { color: #666; font-size: 13px; }
+    .flex { display: flex; align-items: center; gap: 8px; }
+    .success { color: #0a7f28; font-weight: 600; margin-top: 8px; }
+    .error { color: #b00020; font-weight: 600; white-space: pre-wrap; margin-top: 8px; }
+    .countdown { font-variant-numeric: tabular-nums; font-size: 13px; color: #666; }
   </style>
 </head>
+
 <body>
   <h2>Upload Raw PM Data</h2>
   <div class="card">
     <form id="uploadForm" method="post" enctype="multipart/form-data"
           target="hiddenFrame"
           action="<?= webAppUrl ?>">
+
+      <!-- FILE SELECTION -->
       <div class="row">
-        <label>Select combined <b>.xlsx</b> (all branches):</label><br>
+        <label><b>Select Combined INCUS5 Export (.xlsx)</b></label><br>
         <input id="file" name="file" type="file" accept=".xlsx" required>
       </div>
+
+      <!-- PROGRESS DISPLAY -->
       <div class="row">
         <div class="progress"><div id="bar" class="bar"></div></div>
-        <div id="status" class="muted">Waiting for file…</div>
+        <div id="status" class="muted">Waiting for file selection…</div>
       </div>
+
+      <!-- BUTTON ROW -->
       <div class="row flex">
         <button class="btn primary" type="submit" onclick="beginUpload()">Upload & Process</button>
         <button class="btn" type="button" onclick="google.script.host.close()">Cancel</button>
         <span id="countdown" class="countdown"></span>
       </div>
+
+      <!-- UPLOAD RESULT -->
       <div id="result" class="row"></div>
+
+      <!-- Hidden frame receives doPost() response -->
       <iframe name="hiddenFrame" style="display:none;"></iframe>
     </form>
   </div>
 
-<script>
-let success=false, autoTimer=null, sec=15;
-function beginUpload(){setStatus('Uploading file…');setBar(10);poll();}
-function setBar(p){document.getElementById('bar').style.width=p+'%';}
-function bump(){const b=document.getElementById('bar');let w=parseInt(b.style.width||'0',10);
-  w=Math.min(95,w+5);b.style.width=w+'%';}
-function setStatus(t){document.getElementById('status').textContent=t;}
-function poll(){if(success)return;
-  google.script.run.withSuccessHandler(m=>{
-    if(m){setStatus(m);bump();}
-    setTimeout(poll,800);
-  }).getLastProgress();}
-window.addEventListener('message',e=>{
-  if(typeof e.data==='string'){finish(e.data);}
-});
-function finish(msg){
-  success=true;setBar(100);setStatus('Completed.');
-  document.getElementById('result').innerHTML='<div class="success">'+msg+'</div>';
-  countdown();
-}
-function countdown(){
-  sec=15;document.getElementById('countdown').textContent='Auto-closing in '+sec+' s';
-  autoTimer=setInterval(()=>{
-    sec--;if(sec<=0){clearInterval(autoTimer);google.script.host.close();}
-    else document.getElementById('countdown').textContent='Auto-closing in '+sec+' s';
-  },1000);
-}
-</script>
+  <script>
+  /**
+   * =============================================================================
+   * CLIENT SCRIPT – UPLOAD HANDLER + PROGRESS POLLING
+   * -----------------------------------------------------------------------------
+   * 1. beginUpload(): initializes progress bar and polling loop.
+   * 2. poll(): requests getLastProgress() repeatedly until complete.
+   * 3. finish(): triggered by iframe message (doPost() completion).
+   * 4. countdown(): auto-close dialog after success.
+   * =============================================================================
+   */
+  let success = false, autoTimer = null, sec = 15;
+
+  function beginUpload() {
+    setStatus('Uploading file…');
+    setBar(10);
+    poll();
+  }
+
+  function setBar(p) {
+    document.getElementById('bar').style.width = p + '%';
+  }
+
+  function bump() {
+    const b = document.getElementById('bar');
+    let w = parseInt(b.style.width || '0', 10);
+    w = Math.min(95, w + 5);
+    b.style.width = w + '%';
+  }
+
+  function setStatus(t) {
+    document.getElementById('status').textContent = t;
+  }
+
+  function poll() {
+    if (success) return;
+    google.script.run.withSuccessHandler(m => {
+      if (m) { setStatus(m); bump(); }
+      setTimeout(poll, 800);
+    }).getLastProgress();
+  }
+
+  // iframe posts completion message when doPost() finishes
+  window.addEventListener('message', e => {
+    if (typeof e.data === 'string') finish(e.data);
+  });
+
+  function finish(msg) {
+    success = true;
+    setBar(100);
+    setStatus('Completed.');
+    document.getElementById('result').innerHTML = '<div class="success">' + msg + '</div>';
+    countdown();
+  }
+
+  function countdown() {
+    sec = 15;
+    const el = document.getElementById('countdown');
+    el.textContent = 'Auto-closing in ' + sec + ' s';
+    autoTimer = setInterval(() => {
+      sec--;
+      if (sec <= 0) {
+        clearInterval(autoTimer);
+        google.script.host.close();
+      } else {
+        el.textContent = 'Auto-closing in ' + sec + ' s';
+      }
+    }, 1000);
+  }
+  </script>
 </body>
 </html>
