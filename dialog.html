@@ -2,145 +2,71 @@
 <html>
 <head>
   <base target="_top">
+  <meta charset="utf-8">
+  <title>Upload Raw PM Data</title>
   <style>
-    body { font: 14px/1.4 system-ui, Segoe UI, Roboto, Arial; padding: 16px; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; }
-    .row { margin: 10px 0; }
-    .progress { height: 10px; background: #eee; border-radius: 6px; overflow: hidden; }
-    .bar { width: 5%; height: 100%; background: #4285F4; transition: width .3s; }
-    .muted { color: #666; }
-    .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid #999; background: #fafafa; cursor: pointer; }
-    .btn.primary { background: #4285F4; color: #fff; border-color: #4285F4; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .flex { display: flex; gap: 8px; align-items: center; }
-    .right { float: right; }
-    .success { color: #0a7f28; font-weight: 600; }
-    .error { color: #b00020; font-weight: 600; white-space: pre-wrap; }
-    .countdown { font-variant-numeric: tabular-nums; }
+    body{font:14px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:16px;}
+    .card{border:1px solid #ddd;border-radius:10px;padding:16px;background:#fafafa;}
+    .row{margin:10px 0;}
+    .progress{height:10px;background:#eee;border-radius:6px;overflow:hidden;}
+    .bar{width:5%;height:100%;background:#4285F4;transition:width .3s;}
+    .btn{padding:8px 14px;border-radius:8px;border:1px solid #999;background:#fff;cursor:pointer;}
+    .btn.primary{background:#4285F4;color:#fff;border-color:#4285F4;}
+    .muted{color:#666;} .flex{display:flex;gap:8px;align-items:center;}
+    .success{color:#0a7f28;font-weight:600;}
+    .error{color:#b00020;font-weight:600;white-space:pre-wrap;}
+    .countdown{font-variant-numeric:tabular-nums;}
   </style>
 </head>
 <body>
   <h2>Upload Raw PM Data</h2>
   <div class="card">
-    <div class="row">
-      <label for="file">Select combined <b>.xlsx</b> (all branches):</label><br>
-      <input id="file" type="file" accept=".xlsx" />
-    </div>
-
-    <div class="row">
-      <div class="progress"><div id="bar" class="bar"></div></div>
-      <div id="status" class="muted">Waiting for file…</div>
-    </div>
-
-    <div class="row flex">
-      <button id="uploadBtn" class="btn primary" onclick="startUpload()">Upload & Process</button>
-      <button id="cancelBtn" class="btn" onclick="cancelUpload()">Cancel</button>
-      <span id="countdown" class="countdown"></span>
-    </div>
-
-    <div id="result" class="row"></div>
+    <form id="uploadForm" method="post" enctype="multipart/form-data"
+          target="hiddenFrame"
+          action="<?= webAppUrl ?>">
+      <div class="row">
+        <label>Select combined <b>.xlsx</b> (all branches):</label><br>
+        <input id="file" name="file" type="file" accept=".xlsx" required>
+      </div>
+      <div class="row"><div class="progress"><div id="bar" class="bar"></div></div>
+        <div id="status" class="muted">Waiting for file…</div></div>
+      <div class="row flex">
+        <button class="btn primary" type="submit" onclick="beginUpload()">Upload & Process</button>
+        <button class="btn" type="button" onclick="google.script.host.close()">Cancel</button>
+        <span id="countdown" class="countdown"></span>
+      </div>
+      <div id="result" class="row"></div>
+      <iframe name="hiddenFrame" style="display:none;"></iframe>
+    </form>
   </div>
 
-  <script>
-    let canceled = false;
-    let success  = false;
-    let autoCloseTimer = null;
-    let secondsLeft = 15;
-
-    function startUpload() {
-      const file = document.getElementById('file').files[0];
-      if (!file) {
-        setStatus('Please choose an .xlsx file.');
-        return;
-      }
-      canceled = false;
-      success  = false;
-      setBar(10);
-      setStatus('Uploading file…');
-
-      // Pack the blob into an object; Apps Script receives it as a Blob
-      const fr = new FileReader();
-      fr.onload = function(e) {
-        if (canceled) return;
-        const bytes = new Uint8Array(e.target.result);
-        const blob = Utilities.newBlob([...bytes]); // not available in client
-      };
-      // NOTE: In HtmlService, we can't construct a Blob directly in client JS.
-      // Use the documented pattern: pass the file itself via google.script.run with {file: file}
-      const formObj = { file: document.getElementById('file').files[0] };
-
-      setBar(20);
-      setStatus('Processing (convert + split + style + archive)…');
-
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (canceled) return;
-          success = true;
-          setBar(100);
-          setStatus('Completed.');
-          document.getElementById('result').innerHTML = '<div class="success">Success! All branches updated and archived.</div>';
-          startAutoClose();
-        })
-        .withFailureHandler(function(err) {
-          if (canceled) return;
-          setBar(0);
-          setStatus('Error.');
-          document.getElementById('result').innerHTML = '<div class="error">' + (err && err.message ? err.message : err) + '</div>';
-        })
-        .handleRawUpload(formObj);
-
-      // Poll progress text from server
-      pollProgress();
-    }
-
-    function pollProgress() {
-      if (canceled || success) return;
-      google.script.run.withSuccessHandler(function(msg) {
-        if (!canceled && !success && msg) {
-          setStatus(msg);
-          bumpBar(msg);
-          setTimeout(pollProgress, 700);
-        }
-      }).getLastProgress();
-    }
-
-    function bumpBar(msg) {
-      // Simple heuristic to show activity
-      const b = document.getElementById('bar');
-      let w = parseInt(b.style.width || '0', 10);
-      w = Math.min(95, w + 5);
-      setBar(w);
-    }
-
-    function setBar(pct) {
-      document.getElementById('bar').style.width = pct + '%';
-    }
-
-    function setStatus(text) {
-      document.getElementById('status').textContent = text;
-    }
-
-    function cancelUpload() {
-      canceled = true;
-      setBar(0);
-      setStatus('Canceled by user.');
-      document.getElementById('result').innerHTML = '';
-      google.script.host.close();
-    }
-
-    function startAutoClose() {
-      secondsLeft = 15;
-      document.getElementById('countdown').textContent = 'Auto-closing in ' + secondsLeft + 's';
-      autoCloseTimer = setInterval(function() {
-        secondsLeft--;
-        if (secondsLeft <= 0) {
-          clearInterval(autoCloseTimer);
-          google.script.host.close();
-        } else {
-          document.getElementById('countdown').textContent = 'Auto-closing in ' + secondsLeft + 's';
-        }
-      }, 1000);
-    }
-  </script>
+<script>
+let success=false,autoTimer=null,sec=15;
+function beginUpload(){setStatus('Uploading file…');setBar(10);poll();}
+function setBar(p){document.getElementById('bar').style.width=p+'%';}
+function bump(){const b=document.getElementById('bar');let w=parseInt(b.style.width||'0',10);
+  w=Math.min(95,w+5);b.style.width=w+'%';}
+function setStatus(t){document.getElementById('status').textContent=t;}
+function poll(){if(success)return;
+  google.script.run.withSuccessHandler(m=>{
+    if(m){setStatus(m);bump();}
+    setTimeout(poll,800);
+  }).getLastProgress();}
+window.addEventListener('message',e=>{
+  if(typeof e.data==='string'){finish(e.data);}
+});
+function finish(msg){
+  success=true;setBar(100);setStatus('Completed.');
+  document.getElementById('result').innerHTML='<div class="success">'+msg+'</div>';
+  countdown();
+}
+function countdown(){
+  sec=15;document.getElementById('countdown').textContent='Auto-closing in '+sec+' s';
+  autoTimer=setInterval(()=>{
+    sec--;if(sec<=0){clearInterval(autoTimer);google.script.host.close();}
+    else document.getElementById('countdown').textContent='Auto-closing in '+sec+' s';
+  },1000);
+}
+</script>
 </body>
 </html>
