@@ -28,8 +28,10 @@
         <label>Select combined <b>.xlsx</b> (all branches):</label><br>
         <input id="file" name="file" type="file" accept=".xlsx" required>
       </div>
-      <div class="row"><div class="progress"><div id="bar" class="bar"></div></div>
-        <div id="status" class="muted">Waiting for file…</div></div>
+      <div class="row">
+        <div class="progress"><div id="bar" class="bar"></div></div>
+        <div id="status" class="muted">Waiting for file…</div>
+      </div>
       <div class="row flex">
         <button class="btn primary" type="submit" onclick="beginUpload()">Upload & Process</button>
         <button class="btn" type="button" onclick="google.script.host.close()">Cancel</button>
@@ -41,7 +43,7 @@
   </div>
 
 <script>
-let success=false,autoTimer=null,sec=15;
+let success=false, autoTimer=null, sec=15;
 function beginUpload(){setStatus('Uploading file…');setBar(10);poll();}
 function setBar(p){document.getElementById('bar').style.width=p+'%';}
 function bump(){const b=document.getElementById('bar');let w=parseInt(b.style.width||'0',10);
