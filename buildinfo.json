@@ -1,0 +1,36 @@
+{
+  "title": "PM Service Planner – Branch Automation Suite",
+  "author": "Austin Monson",
+  "license": "MIT",
+  "version": "1.4.0",
+  "releaseDate": "2025-10-16",
+  "repo": "https://github.com/austinm-hayden/googlesheets.git",
+  "overview": [
+    "Automates PM service data processing for Hayden Machinery branches.",
+    "Splits raw INCUS5 exports, applies branch formatting, archives previous data.",
+    "Preserves notes (Due/Notes) by Stock # and filters corrected/removed items."
+  ],
+  "changelog": [
+    "v1.0.0 – Initial release (split + style + archive)",
+    "v1.1.0 – Reliable doPost() upload handler",
+    "v1.2.0 – In-sheet upload dialog integration",
+    "v1.2.1 – Case-insensitive HTML handling",
+    "v1.3.0 – Info tab automation + GitHub sync",
+    "v1.4.0 – PROJECT_INFO fully remote; latest commit SHA shown on Information tab"
+  ],
+  "working": [
+    "Springfield machine data list sorted, allows notes and categorization.",
+    "Integrates conditional formatting from Springfield template.",
+    "Tabs are archived on update and can be restored via menu.",
+    "All notes and categorizations are retained when working tabs are updated."
+  ],
+  "pending": [
+    "Additional working tabs for Villa Ridge and West Plains branches.",
+    "Functional upload dialog to allow direct upload of raw INCUS5 data to update working sheets.",
+    "Google Calendar integration for quick job/work order sharing.",
+    "\"Top 20\" list per branch ordered by most overdue service (one service per machine)."
+  ],
+  "limitations": [
+    "Requires credential verification and permissions on first use."
+  ]
+}
