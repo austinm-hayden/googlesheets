@@ -1,7 +1,7 @@
 /***************************************************************************************
  * PM SERVICE PLANNER – RAW UPLOAD → BRANCH SPLITTER + FORMAT CLONER + ARCHIVER
  * Version: 1.4.0  (2025-10-16)
- * Author Credit:  Created by Austin Monson (with ChatGPT assistance)
+ * Author Credit:  Created by Austin Monson
  * License: MIT
  *
  * -------------------------------------------------------------------------------------
