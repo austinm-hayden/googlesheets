@@ -1,153 +1,50 @@
 {
-  "manifestInfo": {
-    "description": "This file serves as the authoritative manifest for the PM Service Planner – Branch Automation Suite. It documents project metadata, architecture overview, implemented features, planned functionality, known limitations, and a detailed version history. The structure is designed for both machine parsing (via Google Apps Script) and human reference within the GitHub repository.",
-    "organization": {
-      "rootLevelKeys": [
-        "title", "author", "license", "version", "releaseDate", "repo",
-        "overview", "architecture", "features", "planned", "limitations",
-        "versionHistory", "notes", "metadata"
-      ],
-      "sections": {
-        "overview": "Provides a narrative summary of the purpose, goals, and general behavior of the system.",
-        "architecture": "Explains major script modules and how they interact.",
-        "features": "Lists all stable and validated functional components of the project.",
-        "planned": "Outlines ongoing or future developments.",
-        "limitations": "Known constraints, environment requirements, and expected setup behavior.",
-        "versionHistory": "Chronological log of all releases, with granular change notes.",
-        "metadata": "Administrative details like build timestamp and commit references."
-      }
-    }
-  },
-
   "title": "PM Service Planner – Branch Automation Suite",
   "author": "Austin Monson",
+  "email": "austinm@myhayden.com",
   "license": "MIT",
-  "version": "1.4.0",
+  "version": "1.7.0",
   "releaseDate": "2025-10-16",
-  "repo": "https://github.com/austinm-hayden/googlesheets.git",
-
+  "repo": "https://github.com/austinm-hayden/googlesheets",
   "overview": [
-    "The PM Service Planner automates preventive maintenance tracking for heavy equipment fleets managed by Hayden Machinery.",
-    "It transforms raw INCUS5 data exports into structured, branch-specific service lists and enforces consistent formatting, validation, and conditional coloring rules.",
-    "Each branch operates on an independently updated sheet that retains machine notes and status fields (Due/Notes) across revisions.",
-    "The script provides complete data-safety routines including archival, rollback restoration, and self-documentation through an automatically generated Information tab."
+    "Automates PM service tracking for all branches.",
+    "Processes combined INCUS5 exports and splits data by branch.",
+    "Retains service notes and due statuses for continuity.",
+    "Formats branch tabs using the Springfield template."
   ],
-
-  "architecture": {
-    "coreComponents": {
-      "DataProcessor": "Reads uploaded .xlsx file, converts it to a Google Sheet, extracts machine data, and splits it into per-branch groups.",
-      "ArchiveManager": "Copies the existing branch tabs into hidden archive sheets before overwriting them, ensuring recoverability.",
-      "CarryoverEngine": "Maintains continuity of 'Due' and 'Notes' fields for machines that persist across data refreshes.",
-      "DialogInterface": "Presents upload and restore HTML dialogs to the user inside the Google Sheet environment.",
-      "InformationTabBuilder": "Generates a dynamic read-me tab populated from the GitHub-hosted buildinfo.json and commit metadata.",
-      "GitHubSync": "Fetches remote manifest data and displays the latest Git commit SHA for traceability.",
-      "LoggingSystem": "Streams live status updates to CacheService for progress polling in HTML dialogs."
-    },
-    "interactionFlow": [
-      "1. User selects 'Upload Raw Data' from the PM Planner menu.",
-      "2. A modal dialog opens and posts the .xlsx file to the doPost() handler.",
-      "3. The handler uploads, converts, and processes data for each branch.",
-      "4. Each branch tab is archived, replaced, formatted, and repopulated.",
-      "5. Upon success, the Information tab rebuilds using this JSON manifest and current Git commit data.",
-      "6. Users can restore archived sheets or view full version/change history at any time."
-    ]
-  },
-
   "features": [
-    "✔ In-sheet upload dialog for raw INCUS5 data (no external web app deployment required).",
-    "✔ Automatic parsing and conversion of uploaded Excel files into structured Google Sheets.",
-    "✔ Branch-based tab generation: Springfield, West Plains, and Villa Ridge.",
-    "✔ Consistent formatting cloned from Springfield template including headers, drop-downs, and conditional formatting.",
-    "✔ Persistent carryover of 'Due' and 'Notes' data by Stock # across updates.",
-    "✔ Automatic exclusion of machines marked Corrected, Removed, or Service Not Needed.",
-    "✔ Pre-update archival of working tabs with time-stamped backups.",
-    "✔ Archive restoration via dedicated Restore Archive menu and dialog.",
-    "✔ Real-time upload progress via CacheService polling in Dialog.html.",
-    "✔ Case-insensitive HTML file resolution for both Dialog and Restore interfaces.",
-    "✔ Information tab auto-generated with GitHub version data and latest commit link.",
-    "✔ Local fallback manifest for offline operation when GitHub is unreachable."
+    "Binary-safe Drive upload (no WebApp required).",
+    "Automatic formatting and validation replication.",
+    "Carryover of Notes/Due fields across updates.",
+    "Archiving system with restoration UI.",
+    "Dynamic Information tab pulling GitHub metadata."
   ],
-
   "planned": [
-    "⏳ Extend full branch automation to Villa Ridge and West Plains working tabs.",
-    "⏳ Implement direct INCUS5 data import via Google Drive integration rather than manual upload.",
-    "⏳ Introduce automated 'Top 20' report per branch showing the most overdue single service per machine.",
-    "⏳ Add Google Calendar integration for scheduling PM services and sharing work orders with field technicians.",
-    "⏳ Include automated email notifications summarizing new uploads and changes.",
-    "⏳ Create a lightweight release workflow to increment version numbers and push updates back to GitHub automatically."
+    "Add calendar integration for service scheduling.",
+    "Generate branch-specific 'Top 20' lists by overdue ranking.",
+    "Integrate automated Slack/email notifications."
   ],
-
   "limitations": [
-    "⚠ Requires first-time authorization for Drive, Spreadsheet, and UrlFetch scopes.",
-    "⚠ Must enable Advanced Google Services → Drive API before initial run.",
-    "⚠ Upload dialog relies on modal context; cannot be executed via simple triggers.",
-    "⚠ Execution time capped by Apps Script quotas; large datasets may need optimization.",
-    "⚠ HTML file content updates currently require manual or clasp-based sync (auto-update feature in development)."
+    "Requires Drive API to be enabled.",
+    "Large files (>15MB) may take several minutes.",
+    "Google OAuth permissions required on first use."
   ],
-
   "versionHistory": [
     {
-      "version": "1.0.0",
-      "date": "2025-05-01",
-      "summary": "Initial release establishing baseline functionality.",
-      "changes": [
-        "Basic import of raw PM data via file upload.",
-        "Manual branch tab creation and Springfield formatting.",
-        "Early implementation of Due/Notes preservation."
-      ]
-    },
-    {
-      "version": "1.1.0",
-      "date": "2025-05-12",
-      "summary": "Introduced reliable file upload using doPost() and multipart form handling.",
-      "changes": [
-        "Replaced google.script.run blob upload with form-based POST handler.",
-        "Added progress polling and upload completion feedback."
-      ]
-    },
-    {
-      "version": "1.2.0",
-      "date": "2025-06-20",
-      "summary": "UI integration and case-insensitive HTML support.",
-      "changes": [
-        "Embedded upload dialog directly in spreadsheet UI.",
-        "Implemented case-insensitive lookups for Dialog and Restore HTML files."
-      ]
-    },
-    {
-      "version": "1.3.0",
-      "date": "2025-09-28",
-      "summary": "Added automated Information tab generation and GitHub synchronization.",
-      "changes": [
-        "Introduced buildinfo.json manifest system.",
-        "Linked Information tab builder to GitHub repository.",
-        "Refined changelog tracking and sectioned layout."
-      ]
-    },
-    {
-      "version": "1.4.0",
+      "version": "1.7.0",
       "date": "2025-10-16",
-      "summary": "Converted PROJECT_INFO to fully remote JSON source; added commit tracking.",
+      "summary": "Stable binary-safe upload and cleanup build.",
       "changes": [
-        "buildInformationTab() now loads metadata directly from buildinfo.json.",
-        "Displays latest commit SHA and date via GitHub API.",
-        "Added offline fallback manifest and error handling for UrlFetch failures.",
-        "Improved case-safe HTML loading and resilient menu creation."
+        "Added persistent upload session with Script Properties.",
+        "Switched to Drive.Files.update() for correct binary merge.",
+        "Temp files auto-deleted post-processing.",
+        "Improved progress and UI reliability."
       ]
     }
   ],
-
-  "notes": [
-    "This file is updated alongside each release to maintain parity between the GitHub repository and deployed spreadsheet scripts.",
-    "Versioning follows semantic format MAJOR.MINOR.PATCH.",
-    "All change notes are written in the present tense to reflect completed actions.",
-    "Sections are intentionally verbose to assist future maintainers or auditors in understanding project evolution."
-  ],
-
   "metadata": {
-    "lastBuild": "2025-10-16T14:25:00-05:00",
-    "sourceCommit": "auto-filled by buildInformationTab() via GitHub API",
-    "buildEnvironment": "Google Apps Script (Bound Spreadsheet Project)",
-    "maintainer": "Austin Monson <austinm@myhayden.com>"
+    "build": "stable",
+    "environment": "Google Sheets",
+    "lastCommit": "auto-fetched from GitHub API"
   }
 }
